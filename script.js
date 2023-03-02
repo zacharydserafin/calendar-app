@@ -1,20 +1,32 @@
-// Wrap all code that interacts with the DOM in a call to jQuery to ensure that
-// the code isn't run until the browser has finished rendering all the elements
-// in the html.
 var currentDayEl = $("#currentDay");
 var timeblockContainerEl = $("#timeblock-container");
-
 var currentHour = dayjs().hour();
 var timeblocks = timeblockContainerEl.children();
 
 
 $(document).ready(function () {
-  // TODO: Add a listener for click events on the save button. This code should
-  // use the id in the containing time-block as a key to save the user input in
-  // local storage. HINT: What does `this` reference in the click listener
-  // function? How can DOM traversal be used to get the "hour-x" id of the
-  // time-block containing the button that was clicked? How might the id be
-  // useful when saving the description in local storage?
+  $("button").click(function() {
+    var selectedTimeblockId = $(this).parent().attr("id");
+    var unsavedText = $(this).parent().children("textarea").val().trim();
+    if (unsavedText !== null) {
+      var scheduleItems = JSON.parse(localStorage.getItem("scheduleItems") || "[]");
+      var foundIndex = scheduleItems.findIndex(function(item) {
+        return item.key === selectedTimeblockId;
+    });
+      if (foundIndex !== -1) {
+        scheduleItems[foundIndex].text = unsavedText;
+      } else {
+        var scheduleItem = {
+          key: selectedTimeblockId,
+          text: unsavedText,
+        };
+        scheduleItems.push(scheduleItem);
+      }
+      localStorage.setItem("scheduleItems", JSON.stringify(scheduleItems));
+    } else {
+      return
+    } 
+  });
 
   for (var i = 0; i < 9; i++) {
     var timeblock = $(timeblocks[i]);
@@ -29,11 +41,19 @@ $(document).ready(function () {
     }
   }
 
-  
-  // TODO: Add code to get any user input that was saved in localStorage and set
-  // the values of the corresponding textarea elements. HINT: How can the id
-  // attribute of each time-block be used to do this?
-  //
+  function init() {
+    var scheduleItems = JSON.parse(localStorage.getItem("scheduleItems")) || "[]";
+    
+    for (i = 0; i < scheduleItems.length; i++) {
+      var currentHourData = scheduleItems[i];
+
+      if (currentHourData !== null) {
+        var selectedHourId = $("#" + currentHourData.key);
+        var selectedHourText = currentHourData.text;
+        selectedHourId.children("textarea").text(selectedHourText);
+      } 
+    }
+  }
   
   function displayTime() {
     var todayFormat = dayjs().format("MM/DD/YYYY - hh:mm:ss a");
@@ -42,4 +62,6 @@ $(document).ready(function () {
 
   displayTime();
   setInterval(displayTime, 1000);
+  init();
+  
 });
